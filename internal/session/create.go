@@ -51,20 +51,27 @@ func Create(opts CreateOpts) error {
 	// Find the new worktree path.
 	worktreePath, err := findWorktreePath(opts.RepoPath, opts.Branch)
 	if err != nil {
+		removeWorktree(opts.RepoPath, opts.Branch)
 		return fmt.Errorf("could not determine worktree path: %w", err)
 	}
+
+	worktreeCreated := true
 
 	// Create the tmux session.
 	sessionName := fmt.Sprintf("ai/%s/%s", opts.RepoName, opts.Branch)
 	checkCmd := exec.Command("tmux", "has-session", "-t", sessionName)
 	if checkCmd.Run() == nil {
+		removeWorktree(opts.RepoPath, opts.Branch)
 		return fmt.Errorf("session %s already exists", sessionName)
 	}
 
 	newCmd := exec.Command("tmux", "new-session", "-d", "-s", sessionName, "-c", worktreePath)
 	if out, err := newCmd.CombinedOutput(); err != nil {
+		removeWorktree(opts.RepoPath, opts.Branch)
 		return fmt.Errorf("tmux new-session: %s", strings.TrimSpace(string(out)))
 	}
+
+	sessionCreated := true
 
 	// Store the agent name as a session environment variable for reliable retrieval.
 	exec.Command("tmux", "set-environment", "-t", sessionName, "TAISM_AGENT", opts.Agent).Run()
@@ -72,9 +79,42 @@ func Create(opts CreateOpts) error {
 	// Launch agent inside the session.
 	sendCmd := exec.Command("tmux", "send-keys", "-t", sessionName, opts.Agent, "Enter")
 	if out, err := sendCmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("tmux send-keys: %s", strings.TrimSpace(string(out)))
+		origErr := fmt.Errorf("tmux send-keys: %s", strings.TrimSpace(string(out)))
+		rollbackErr := rollback(sessionName, opts.RepoPath, opts.Branch, sessionCreated, worktreeCreated)
+		if rollbackErr != nil {
+			return fmt.Errorf("%w; additionally, rollback failed: %s. Manual cleanup may be needed", origErr, rollbackErr)
+		}
+		return origErr
 	}
 
+	return nil
+}
+
+func rollback(sessionName, repoPath, branch string, killSession, removeWt bool) error {
+	var errs []string
+	if killSession {
+		if err := exec.Command("tmux", "kill-session", "-t", sessionName).Run(); err != nil {
+			errs = append(errs, fmt.Sprintf("kill session: %s", err))
+		}
+	}
+	if removeWt {
+		if err := removeWorktree(repoPath, branch); err != nil {
+			errs = append(errs, fmt.Sprintf("remove worktree: %s", err))
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("%s", strings.Join(errs, "; "))
+	}
+	return nil
+}
+
+func removeWorktree(repoPath, branch string) error {
+	cmd := exec.Command("wt", "remove", branch)
+	cmd.Dir = repoPath
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s", strings.TrimSpace(string(out)))
+	}
 	return nil
 }
 

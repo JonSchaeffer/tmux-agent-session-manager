@@ -15,8 +15,13 @@ type Session struct {
 	RepoName  string    `json:"repo_name"`
 	Branch    string    `json:"branch"`
 	Agent     string    `json:"agent"`
+	Status    string    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	WorkDir   string    `json:"work_dir"`
+}
+
+var shellProcesses = map[string]bool{
+	"bash": true, "zsh": true, "sh": true, "fish": true,
 }
 
 var knownAgents = map[string]bool{
@@ -70,12 +75,14 @@ func List() ([]Session, error) {
 		createdAt := time.Unix(unix, 0)
 
 		agent := detectAgent(name)
+		status := detectStatus(name)
 
 		sessions = append(sessions, Session{
 			Name:      name,
 			RepoName:  repoName,
 			Branch:    branch,
 			Agent:     agent,
+			Status:    status,
 			CreatedAt: createdAt,
 			WorkDir:   workDir,
 		})
@@ -111,6 +118,21 @@ func detectAgent(sessionName string) string {
 		}
 	}
 	return "unknown"
+}
+
+func detectStatus(sessionName string) string {
+	out, err := exec.Command("tmux", "list-panes", "-t", sessionName,
+		"-F", "#{pane_current_command}").Output()
+	if err != nil {
+		return "unknown"
+	}
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		cmd := strings.ToLower(strings.TrimSpace(line))
+		if shellProcesses[cmd] {
+			return "idle"
+		}
+	}
+	return "running"
 }
 
 func isNoServerErr(err error) bool {

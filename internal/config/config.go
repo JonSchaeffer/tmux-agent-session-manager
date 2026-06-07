@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -77,7 +79,44 @@ func Load() (*Config, error) {
 		cfg.RepoRoot = d.RepoRoot
 	}
 
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+
 	return cfg, nil
+}
+
+var validAgentName = regexp.MustCompile(`^[a-zA-Z0-9-]+$`)
+var validDimension = regexp.MustCompile(`^\d+%?$`)
+
+func (c *Config) Validate() error {
+	if c.RepoRoot == "" {
+		return fmt.Errorf("repo_root must not be empty")
+	}
+	for key, val := range c.Agents {
+		if !validAgentName.MatchString(key) {
+			return fmt.Errorf("invalid agent name %q: agent names must be alphanumeric (hyphens allowed)", key)
+		}
+		if val == "" {
+			return fmt.Errorf("agent %q has an empty command", key)
+		}
+	}
+	if c.DefaultAgent == "" {
+		return fmt.Errorf("default_agent must not be empty")
+	}
+	if _, ok := c.Agents[c.DefaultAgent]; !ok {
+		return fmt.Errorf("default_agent %q is not defined in agents", c.DefaultAgent)
+	}
+	if len([]rune(c.Keybinding)) != 1 {
+		return fmt.Errorf("keybinding must be a single character, got %q", c.Keybinding)
+	}
+	if !validDimension.MatchString(c.PopupWidth) {
+		return fmt.Errorf("popup_width %q must be a number or percentage (e.g. 80%%)", c.PopupWidth)
+	}
+	if !validDimension.MatchString(c.PopupHeight) {
+		return fmt.Errorf("popup_height %q must be a number or percentage (e.g. 70%%)", c.PopupHeight)
+	}
+	return nil
 }
 
 func expandTilde(path string) string {

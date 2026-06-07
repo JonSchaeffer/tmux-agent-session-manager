@@ -41,7 +41,7 @@ var listCmd = &cobra.Command{
 		}
 
 		for _, s := range sessions {
-			fmt.Printf("%-40s %-10s %s\n", s.Name, s.Agent, session.RelativeTime(s.CreatedAt))
+			fmt.Printf("%-40s %-10s %-10s %s\n", s.Name, s.Agent, s.Status, session.RelativeTime(s.CreatedAt))
 		}
 		return nil
 	},

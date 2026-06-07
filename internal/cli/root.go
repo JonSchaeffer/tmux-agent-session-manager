@@ -29,4 +29,5 @@ func init() {
 	rootCmd.AddCommand(reposCmd)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(agentsCmd)
+	rootCmd.AddCommand(cleanupCmd)
 }
