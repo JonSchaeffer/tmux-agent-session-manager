@@ -37,7 +37,7 @@ func ConfigPath() string {
 		home, _ := os.UserHomeDir()
 		base = filepath.Join(home, ".config")
 	}
-	return filepath.Join(base, "taism", "config.yaml")
+	return filepath.Join(base, "tasm", "config.yaml")
 }
 
 func Load() (*Config, error) {

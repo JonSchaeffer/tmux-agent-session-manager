@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jonschaeffer/tmux-ai-session-manager/internal/config"
-	"github.com/jonschaeffer/tmux-ai-session-manager/internal/repo"
+	"github.com/jonschaeffer/tmux-agent-session-manager/internal/config"
+	"github.com/jonschaeffer/tmux-agent-session-manager/internal/repo"
 	"github.com/spf13/cobra"
 )
 

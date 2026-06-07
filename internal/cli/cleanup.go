@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonschaeffer/tmux-ai-session-manager/internal/deps"
-	"github.com/jonschaeffer/tmux-ai-session-manager/internal/session"
+	"github.com/jonschaeffer/tmux-agent-session-manager/internal/deps"
+	"github.com/jonschaeffer/tmux-agent-session-manager/internal/session"
 	"github.com/spf13/cobra"
 )
 

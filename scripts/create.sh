@@ -2,12 +2,12 @@
 
 PLUGIN_DIR="${PLUGIN_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
-if command -v taism &>/dev/null; then
-  TAISM="taism"
-elif [[ -x "$PLUGIN_DIR/bin/taism" ]]; then
-  TAISM="$PLUGIN_DIR/bin/taism"
+if command -v tasm &>/dev/null; then
+  TAISM="tasm"
+elif [[ -x "$PLUGIN_DIR/bin/tasm" ]]; then
+  TAISM="$PLUGIN_DIR/bin/tasm"
 else
-  echo "taism binary not found. Run 'make install' in the plugin directory."
+  echo "tasm binary not found. Run 'make install' in the plugin directory."
   exit 1
 fi
 
@@ -22,7 +22,7 @@ while true; do
   branch="$(echo "" | fzf --height=100% --prompt "branch name> " --print-query --no-info 2>/dev/null | head -1)"
   [[ -z "$branch" ]] && exit 0
 
-  session_name="ai/${repo_name}/${branch}"
+  session_name="agent/${repo_name}/${branch}"
   if tmux has-session -t "$session_name" 2>/dev/null; then
     printf 'Session %s already exists. Attach to it? [Y/n] ' "$session_name"
     read -r answer
@@ -54,4 +54,4 @@ if ! "$TAISM" create --repo "$repo_path" --branch "$branch" --agent "$agent"; th
   exit 1
 fi
 
-"$TAISM" attach "ai/${repo_name}/${branch}"
+"$TAISM" attach "agent/${repo_name}/${branch}"

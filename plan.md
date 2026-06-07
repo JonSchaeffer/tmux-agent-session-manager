@@ -1,4 +1,4 @@
-# tmux-ai-session-manager — Detailed Spec
+# tmux-agent-session-manager — Detailed Spec
 
 ## Overview
 
@@ -7,11 +7,11 @@ A tmux plugin + Go CLI that manages AI coding sessions as tmux sessions, each sc
 ## Architecture
 
 ```
-tmux keybinding → fzf-tmux popup → `taism` Go CLI binary → tmux / wt / git / AI CLI
+tmux keybinding → fzf-tmux popup → `tasm` Go CLI binary → tmux / wt / git / AI CLI
 ```
 
-- **`taism`** — single Go binary, the brain. Subcommands handle all logic.
-- **Tmux plugin layer** — thin shell script (`tmux-ai-session-manager.tmux`) that registers the keybinding and launches the popup. Installed via TPM.
+- **`tasm`** — single Go binary, the brain. Subcommands handle all logic.
+- **Tmux plugin layer** — thin shell script (`tmux-agent-session-manager.tmux`) that registers the keybinding and launches the popup. Installed via TPM.
 - **fzf** — drives the interactive UI inside the tmux popup.
 - **wt** - needed for git worktree support, drives creation of worktrees
 
@@ -19,7 +19,7 @@ tmux keybinding → fzf-tmux popup → `taism` Go CLI binary → tmux / wt / git
 
 | Concept | Implementation |
 |---|---|
-| **AI Session** | A tmux session named `ai/<repo>/<branch>` running an AI agent (e.g. `claude`). The branch name doubles as the worktree name. |
+| **AI Session** | A tmux session named `agent/<repo>/<branch>` running an AI agent (e.g. `claude`). The branch name doubles as the worktree name. |
 | **Isolation** | Each session gets its own `wt` worktree so agents don't conflict |
 | **Repo root** | User-configured directory (e.g. `~/code`) scanned for git repos. Defaults to `$HOME` if not configured. |
 | **Temp sessions** | *(v2)* Sessions not tied to a repo, run in a configurable scratch dir. No `wt` involved. |
@@ -35,7 +35,7 @@ tmux keybinding → fzf-tmux popup → `taism` Go CLI binary → tmux / wt / git
 
 ## Configuration
 
-Config file: `~/.config/taism/config.yaml` (XDG-compliant)
+Config file: `~/.config/tasm/config.yaml` (XDG-compliant)
 
 ```yaml
 # Directory containing git repos (defaults to $HOME if not set)
@@ -64,9 +64,9 @@ popup_height: "70%"
 
 Tmux options (set in `.tmux.conf`):
 ```
-set -g @ai-session-bind 'A'
-set -g @ai-session-repo-root '~/code'
-set -g @ai-session-default-agent 'claude'
+set -g @agent-session-bind 'A'
+set -g @agent-session-repo-root '~/code'
+set -g @agent-session-default-agent 'claude'
 ```
 
 ## User Flows
@@ -76,9 +76,9 @@ set -g @ai-session-default-agent 'claude'
 fzf-tmux floating window appears showing active AI sessions:
 
 ```
-  ai/myapp/feature-auth     claude   running   3m ago
-  ai/myapp/fix-logging      claude   running  12m ago
-  ai/infra-tools/refactor   claude   idle      1h ago
+  agent/myapp/feature-auth     claude   running   3m ago
+  agent/myapp/fix-logging      claude   running  12m ago
+  agent/infra-tools/refactor   claude   idle      1h ago
 > [Create new session]
 ```
 
@@ -98,7 +98,7 @@ Sequential fzf prompts:
 Behind the scenes, the CLI:
 1. Runs `git fetch` in the selected repo to ensure it's up to date
 2. Runs `wt switch --create <branch>` in the selected repo to create an isolated worktree (branching from `main`/`master`)
-3. Creates a tmux session named `ai/<repo>/<branch>` with its working directory set to the new worktree path
+3. Creates a tmux session named `agent/<repo>/<branch>` with its working directory set to the new worktree path
 4. Launches the selected AI agent command inside that session
 5. Attaches the user to the new session
 
@@ -120,44 +120,44 @@ Select a session, press `Alt+Backspace`. The CLI:
 ## CLI Subcommands
 
 ```
-taism                     # No args: launch the popup (main entry point)
-taism list                # JSON output of all active AI sessions
-taism create              # Interactive session creation flow
-taism attach <session>    # Attach to a session by name
-taism delete <session>    # Delete a session and clean up worktree
-taism repos               # List discovered repos under repo_root
-taism config              # Print resolved config
+tasm                     # No args: launch the popup (main entry point)
+tasm list                # JSON output of all active AI sessions
+tasm create              # Interactive session creation flow
+tasm attach <session>    # Attach to a session by name
+tasm delete <session>    # Delete a session and clean up worktree
+tasm repos               # List discovered repos under repo_root
+tasm config              # Print resolved config
 ```
 
 The `list` subcommand powers the fzf display. It gathers data from:
-- `tmux list-sessions` — active tmux sessions matching the `ai/` prefix
+- `tmux list-sessions` — active tmux sessions matching the `agent/` prefix
 - `wt list` — worktree status per repo
 - Process inspection — whether the AI agent is still running or idle
 
 ## Session Naming Convention
 
 ```
-ai/<repo-name>/<branch>
+agent/<repo-name>/<branch>
 ```
 
 Examples:
-- `ai/myapp/feature-auth`
-- `ai/infra-tools/refactor-ci`
-- `ai/temp/quick-experiment`
+- `agent/myapp/feature-auth`
+- `agent/infra-tools/refactor-ci`
+- `agent/temp/quick-experiment`
 
 The `<repo-name>` is the directory name of the repo (not the full path). Collisions (two repos named `myapp`) are handled by appending a short suffix.
 
 ## Tmux Plugin Structure
 
 ```
-tmux-ai-session-manager/
-├── tmux-ai-session-manager.tmux   # TPM entrypoint: registers keybinding
+tmux-agent-session-manager/
+├── tmux-agent-session-manager.tmux   # TPM entrypoint: registers keybinding
 ├── scripts/
 │   ├── popup.sh                   # Launched by keybinding, runs fzf-tmux
 │   ├── create.sh                  # Interactive create flow (fzf prompts)
 │   └── delete.sh                  # Delete with confirmation
 ├── cmd/
-│   └── taism/
+│   └── tasm/
 │       └── main.go                # CLI entrypoint
 ├── internal/
 │   ├── config/                    # Config loading (YAML + tmux options)
@@ -170,7 +170,7 @@ tmux-ai-session-manager/
 └── idea.md
 ```
 
-The shell scripts are thin wrappers — they invoke `taism` subcommands and pipe output to fzf. All real logic lives in Go.
+The shell scripts are thin wrappers — they invoke `tasm` subcommands and pipe output to fzf. All real logic lives in Go.
 
 ## Implementation Phases
 
@@ -178,7 +178,7 @@ The shell scripts are thin wrappers — they invoke `taism` subcommands and pipe
 - [ ] Go project scaffold (`go mod init`, CLI framework with cobra or similar)
 - [ ] Config loading (YAML file + defaults)
 - [ ] Repo discovery (walk `repo_root`, find directories with `.git`)
-- [ ] Session listing (query tmux for `ai/*` sessions, enrich with metadata)
+- [ ] Session listing (query tmux for `agent/*` sessions, enrich with metadata)
 
 ### Phase 2: Core CRUD
 - [ ] Session creation (repo picker → branch name → `wt switch --create` → `tmux new-session` → launch agent)

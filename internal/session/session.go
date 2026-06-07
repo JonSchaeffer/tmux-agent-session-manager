@@ -57,7 +57,7 @@ func List() ([]Session, error) {
 		}
 		name, createdStr, workDir := parts[0], parts[1], parts[2]
 
-		if !strings.HasPrefix(name, "ai/") {
+		if !strings.HasPrefix(name, "agent/") {
 			continue
 		}
 

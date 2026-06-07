@@ -1,6 +1,6 @@
-BINARY=taism
+BINARY=tasm
 BIN_DIR=bin
-CMD=./cmd/taism
+CMD=./cmd/tasm
 
 .PHONY: build install clean
 

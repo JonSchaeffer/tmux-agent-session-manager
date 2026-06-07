@@ -2,7 +2,7 @@
 
 > These tasks are **independent** — they can be worked on in parallel by separate agents.
 > Each task should be implemented in its own commit.
-> Refer to `plan.md` for the full spec. The codebase is a Go CLI (`taism`) + shell scripts for a tmux plugin.
+> Refer to `plan.md` for the full spec. The codebase is a Go CLI (`tasm`) + shell scripts for a tmux plugin.
 
 ---
 
@@ -10,7 +10,7 @@
 
 ### Problem
 
-The config file at `~/.config/taism/config.yaml` is parsed with `gopkg.in/yaml.v3`. If a user accidentally indents keys under the wrong parent (e.g., puts `default_agent` and `keybinding` under `agents:`), those keys silently become agent entries. There is no validation that catches this. The tool should fail loudly on bad config rather than behaving unexpectedly.
+The config file at `~/.config/tasm/config.yaml` is parsed with `gopkg.in/yaml.v3`. If a user accidentally indents keys under the wrong parent (e.g., puts `default_agent` and `keybinding` under `agents:`), those keys silently become agent entries. There is no validation that catches this. The tool should fail loudly on bad config rather than behaving unexpectedly.
 
 ### What to do
 
@@ -27,7 +27,7 @@ Add validation to the config loading in `internal/config/config.go` that runs af
    - `Keybinding` is a single character.
    - `PopupWidth` and `PopupHeight` match the pattern `\d+%` or are pure integers.
 3. Call `Validate()` at the end of `Load()`, after all merging and tilde expansion. Return the validation error if any.
-4. When validation fails, the error message should include the config file path so the user knows where to fix: `"/Users/jon/.config/taism/config.yaml: default_agent 'aider' is not defined in agents"`.
+4. When validation fails, the error message should include the config file path so the user knows where to fix: `"/Users/jon/.config/tasm/config.yaml: default_agent 'aider' is not defined in agents"`.
 
 ### Acceptance Criteria
 
@@ -37,7 +37,7 @@ Add validation to the config loading in `internal/config/config.go` that runs af
 - [ ] A config with `keybinding: AI` (multi-char) produces an error
 - [ ] A valid config (or no config file at all) passes validation with no errors
 - [ ] All error messages include the config file path
-- [ ] `taism config` shows the validation error and exits 1 on bad config
+- [ ] `tasm config` shows the validation error and exits 1 on bad config
 - [ ] All other subcommands that load config also fail on bad config (they all call `config.Load()`)
 
 ### Files to modify
@@ -77,18 +77,18 @@ Add a `Status` field to the `Session` struct and detect whether the agent proces
    ```
    So the output looks like:
    ```
-   ai/myapp/feature-auth                    claude     running    3m ago
-   ai/myapp/fix-logging                     claude     idle       12m ago
+   agent/myapp/feature-auth                    claude     running    3m ago
+   agent/myapp/fix-logging                     claude     idle       12m ago
    ```
 5. Include `Status` in the `--json` output (it's automatic since the struct field has a json tag).
 
 ### Acceptance Criteria
 
-- [ ] `taism list` shows `running` or `idle` for each session
+- [ ] `tasm list` shows `running` or `idle` for each session
 - [ ] A session with an active agent (e.g., claude is the foreground process) shows `running`
 - [ ] A session where the agent has exited (pane is back to a shell like zsh/bash) shows `idle`
-- [ ] `taism list --json` includes a `"status"` field on each session object
-- [ ] The popup display (which pipes `taism list`) shows the status column between agent and time
+- [ ] `tasm list --json` includes a `"status"` field on each session object
+- [ ] The popup display (which pipes `tasm list`) shows the status column between agent and time
 - [ ] If pane inspection fails, status defaults to `"unknown"`
 
 ### Files to modify
@@ -158,7 +158,7 @@ Over time, users will accumulate sessions where the agent has exited and the wor
 
 ### What to do
 
-Add a `taism cleanup` subcommand that finds and deletes stale sessions.
+Add a `tasm cleanup` subcommand that finds and deletes stale sessions.
 
 ### Steps
 
@@ -168,9 +168,9 @@ Add a `taism cleanup` subcommand that finds and deletes stale sessions.
    - Print the list of stale sessions to the user:
      ```
      Found 3 idle sessions:
-       ai/myapp/feature-auth        idle  2h ago
-       ai/infra/old-refactor        idle  1d ago
-       ai/myapp/fix-typo            idle  3d ago
+       agent/myapp/feature-auth        idle  2h ago
+       agent/infra/old-refactor        idle  1d ago
+       agent/myapp/fix-typo            idle  3d ago
      ```
    - Prompt for confirmation: `"Delete all 3 idle sessions? [y/N]"`.
    - Accept a `--force` flag to skip confirmation.
@@ -182,9 +182,9 @@ Add a `taism cleanup` subcommand that finds and deletes stale sessions.
 
 ### Acceptance Criteria
 
-- [ ] `taism cleanup` lists all idle sessions and asks for confirmation before deleting
-- [ ] `taism cleanup --force` skips confirmation
-- [ ] `taism cleanup --older-than 1h` only targets idle sessions created more than 1 hour ago
+- [ ] `tasm cleanup` lists all idle sessions and asks for confirmation before deleting
+- [ ] `tasm cleanup --force` skips confirmation
+- [ ] `tasm cleanup --older-than 1h` only targets idle sessions created more than 1 hour ago
 - [ ] Each deletion removes both the tmux session and the worktree
 - [ ] If one deletion fails, the others still proceed
 - [ ] A summary line is printed at the end with counts
@@ -204,7 +204,7 @@ internal/cli/root.go     (register cleanupCmd in init)
 
 ### Problem
 
-If a user tries to create a session for a repo + branch combination that already exists, the `taism create` command returns an error. But this happens late in the flow — after the user has already gone through three fzf prompts. It's a bad experience.
+If a user tries to create a session for a repo + branch combination that already exists, the `tasm create` command returns an error. But this happens late in the flow — after the user has already gone through three fzf prompts. It's a bad experience.
 
 ### What to do
 
@@ -213,13 +213,13 @@ Detect the conflict early in the create flow and warn the user or offer to attac
 ### Steps
 
 1. Modify `scripts/create.sh` to check for an existing session after the user picks a repo and branch name (after Step 2, before Step 3).
-2. After the user types a branch name, construct the session name: `ai/<repo_name>/<branch>`.
-3. Run `tmux has-session -t "ai/<repo_name>/<branch>" 2>/dev/null`. If it exits 0, the session already exists.
+2. After the user types a branch name, construct the session name: `agent/<repo_name>/<branch>`.
+3. Run `tmux has-session -t "agent/<repo_name>/<branch>" 2>/dev/null`. If it exits 0, the session already exists.
 4. When a conflict is detected, show a prompt:
    ```
-   Session ai/myapp/feature-auth already exists. Attach to it? [Y/n]
+   Session agent/myapp/feature-auth already exists. Attach to it? [Y/n]
    ```
-   - If yes (or Enter), run `taism attach ai/<repo_name>/<branch>` and exit.
+   - If yes (or Enter), run `tasm attach agent/<repo_name>/<branch>` and exit.
    - If no, go back to the branch name step (re-prompt for a different branch name). Implement this as a simple loop around Step 2.
 
 ### Acceptance Criteria
@@ -228,7 +228,7 @@ Detect the conflict early in the create flow and warn the user or offer to attac
 - [ ] The user can choose to attach to the existing session directly
 - [ ] The user can choose to go back and pick a different branch name
 - [ ] If the session doesn't exist, the create flow proceeds as normal
-- [ ] The check uses the same naming convention (`ai/<repo>/<branch>`) as `taism create`
+- [ ] The check uses the same naming convention (`agent/<repo>/<branch>`) as `tasm create`
 
 ### Files to modify
 
@@ -238,7 +238,7 @@ scripts/create.sh  (add session existence check after branch name step)
 
 ---
 
-## Task P6: Improve `taism list` Empty State in Popup
+## Task P6: Improve `tasm list` Empty State in Popup
 
 ### Problem
 
@@ -252,7 +252,7 @@ Show a helpful welcome message in the preview pane when `[Create new session]` i
 
 1. Modify `scripts/popup.sh`'s preview command. When the selected item is `[Create new session]`, instead of the single line `"Create a new AI coding session"`, show a more helpful message:
    ```
-   taism — tmux ai session manager
+   tasm — tmux agent session manager
 
    Create a new AI coding session:
      1. Pick a git repo from your configured repo_root

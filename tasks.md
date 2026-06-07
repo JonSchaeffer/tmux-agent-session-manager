@@ -14,10 +14,10 @@ Initialize the Go project and set up the CLI framework with empty subcommands. T
 
 ### Steps
 
-1. Run `go mod init github.com/jonschaeffer/tmux-ai-session-manager` in the project root.
+1. Run `go mod init github.com/jonschaeffer/tmux-agent-session-manager` in the project root.
 2. Install cobra as the CLI framework: `go get github.com/spf13/cobra@latest`.
-3. Create `cmd/taism/main.go` — the binary entrypoint. It should call the root command's `Execute()`.
-4. Create `internal/cli/root.go` — define the root cobra command. When invoked with no args, it should print `"taism - tmux ai session manager"` and exit (placeholder — will launch the popup later in Task 8).
+3. Create `cmd/tasm/main.go` — the binary entrypoint. It should call the root command's `Execute()`.
+4. Create `internal/cli/root.go` — define the root cobra command. When invoked with no args, it should print `"tasm - tmux agent session manager"` and exit (placeholder — will launch the popup later in Task 8).
 5. Register the following subcommands as empty stubs (each prints `"not implemented yet"` and exits with code 1):
    - `list` in `internal/cli/list.go`
    - `create` in `internal/cli/create.go`
@@ -26,25 +26,25 @@ Initialize the Go project and set up the CLI framework with empty subcommands. T
    - `repos` in `internal/cli/repos.go`
    - `config` in `internal/cli/config.go`
 6. Create a `Makefile` with:
-   - `build`: compiles the binary to `bin/taism`
-   - `install`: copies `bin/taism` to `$(GOPATH)/bin/` (or `/usr/local/bin/`)
+   - `build`: compiles the binary to `bin/tasm`
+   - `install`: copies `bin/tasm` to `$(GOPATH)/bin/` (or `/usr/local/bin/`)
    - `clean`: removes the `bin/` directory
 7. Add `bin/` to `.gitignore`.
-8. Verify: `make build && ./bin/taism` prints the placeholder message. `./bin/taism list` prints "not implemented yet" and exits 1.
+8. Verify: `make build && ./bin/tasm` prints the placeholder message. `./bin/tasm list` prints "not implemented yet" and exits 1.
 
 ### Acceptance Criteria
 
-- [ ] `go build ./cmd/taism` succeeds with zero errors
-- [ ] Running `./bin/taism` prints the tool name and exits 0
-- [ ] Running `./bin/taism list`, `create`, `attach`, `delete`, `repos`, `config` each print "not implemented yet" and exit 1
-- [ ] Running `./bin/taism --help` shows all six subcommands
+- [ ] `go build ./cmd/tasm` succeeds with zero errors
+- [ ] Running `./bin/tasm` prints the tool name and exits 0
+- [ ] Running `./bin/tasm list`, `create`, `attach`, `delete`, `repos`, `config` each print "not implemented yet" and exit 1
+- [ ] Running `./bin/tasm --help` shows all six subcommands
 - [ ] `Makefile` has `build`, `install`, and `clean` targets that work
 - [ ] `.gitignore` excludes `bin/`
 
 ### Files to create
 
 ```
-cmd/taism/main.go
+cmd/tasm/main.go
 internal/cli/root.go
 internal/cli/list.go
 internal/cli/create.go
@@ -62,7 +62,7 @@ Makefile
 
 ### What to do
 
-Implement config loading from a YAML file at `~/.config/taism/config.yaml`. The config struct should have defaults for every field so the tool works without a config file present.
+Implement config loading from a YAML file at `~/.config/tasm/config.yaml`. The config struct should have defaults for every field so the tool works without a config file present.
 
 ### Steps
 
@@ -78,7 +78,7 @@ Implement config loading from a YAML file at `~/.config/taism/config.yaml`. The 
      PopupHeight   string            — default: "70%"
      ```
    - A `Load() (*Config, error)` function that:
-     1. Constructs the config path using `$XDG_CONFIG_HOME/taism/config.yaml` (falling back to `~/.config/taism/config.yaml` if `$XDG_CONFIG_HOME` is unset).
+     1. Constructs the config path using `$XDG_CONFIG_HOME/tasm/config.yaml` (falling back to `~/.config/tasm/config.yaml` if `$XDG_CONFIG_HOME` is unset).
      2. If the file exists, reads and unmarshals it into the struct, merging with defaults (i.e., any field not specified in the file keeps its default value).
      3. If the file doesn't exist, returns the defaults (no error).
      4. Expands `~` in `RepoRoot` to the actual home directory.
@@ -90,8 +90,8 @@ Implement config loading from a YAML file at `~/.config/taism/config.yaml`. The 
 
 ### Acceptance Criteria
 
-- [ ] `taism config` with no config file present prints the default config as YAML and exits 0
-- [ ] `taism config` with a config file present prints the merged config (user values override defaults, unset fields keep defaults)
+- [ ] `tasm config` with no config file present prints the default config as YAML and exits 0
+- [ ] `tasm config` with a config file present prints the merged config (user values override defaults, unset fields keep defaults)
 - [ ] `RepoRoot` defaults to `$HOME` when not specified
 - [ ] `Agents` map defaults to `{"claude": "claude"}` when not specified
 - [ ] `~` in `RepoRoot` is expanded to the actual home directory path in the output
@@ -133,7 +133,7 @@ Implement scanning of `repo_root` to find all git repositories. This powers the 
 
 ### Acceptance Criteria
 
-- [ ] `taism repos` lists git repos found under the configured `repo_root`
+- [ ] `tasm repos` lists git repos found under the configured `repo_root`
 - [ ] Output format is `<name>\t<path>` (tab-separated), one repo per line
 - [ ] Repos are sorted alphabetically by name
 - [ ] `.git`, `node_modules` directories are not recursed into
@@ -162,7 +162,7 @@ Implement the `list` subcommand that queries tmux for active AI sessions and out
 1. Create `internal/session/session.go` with:
    - A `Session` struct:
      ```
-     Name      string    // e.g. "ai/myapp/feature-auth"
+     Name      string    // e.g. "agent/myapp/feature-auth"
      RepoName  string    // e.g. "myapp"
      Branch    string    // e.g. "feature-auth"
      Agent     string    // e.g. "claude"
@@ -171,25 +171,25 @@ Implement the `list` subcommand that queries tmux for active AI sessions and out
      ```
    - A `List() ([]Session, error)` function that:
      1. Runs `tmux list-sessions -F "#{session_name}\t#{session_created}\t#{session_path}"`.
-     2. Filters to sessions whose name starts with `ai/`.
-     3. Parses each matching session into a `Session` struct. The repo name and branch are extracted by splitting the session name on `/` (format: `ai/<repo>/<branch>`).
+     2. Filters to sessions whose name starts with `agent/`.
+     3. Parses each matching session into a `Session` struct. The repo name and branch are extracted by splitting the session name on `/` (format: `agent/<repo>/<branch>`).
      4. Detects the agent type: check the session's active pane command via `tmux list-panes -t <session> -F "#{pane_current_command}"`. If the command matches a known agent name (claude, aider, codex, pi), set it. Otherwise set to `"unknown"`.
      5. Returns sessions sorted by creation time (newest first).
 2. Update the `list` subcommand in `internal/cli/list.go` to:
    - Accept a `--json` flag. When set, output the sessions as a JSON array.
    - When `--json` is NOT set, output in a human-readable format suitable for fzf display:
      ```
-     ai/myapp/feature-auth     claude   3m ago
-     ai/myapp/fix-logging      claude   12m ago
+     agent/myapp/feature-auth     claude   3m ago
+     agent/myapp/fix-logging      claude   12m ago
      ```
      The format is: `<session-name>` (left-padded to 40 chars), then `<agent>` (left-padded to 10 chars), then relative time.
    - If no sessions exist, output nothing and exit 0 (not an error).
 
 ### Acceptance Criteria
 
-- [ ] `taism list` outputs only tmux sessions that start with `ai/`
+- [ ] `tasm list` outputs only tmux sessions that start with `agent/`
 - [ ] Each line contains session name, agent type, and relative age
-- [ ] `taism list --json` outputs a valid JSON array of session objects
+- [ ] `tasm list --json` outputs a valid JSON array of session objects
 - [ ] Agent detection correctly identifies the running process (claude, aider, codex, pi)
 - [ ] Sessions are sorted newest-first
 - [ ] If tmux is not running, the command exits with a clear error: "tmux is not running"
@@ -225,19 +225,19 @@ Implement the core session creation logic as a programmatic function and wire it
      2. **Fetch**: run `git -C <RepoPath> fetch` to update remote refs.
      3. **Create worktree**: run `wt switch --create <Branch>` with the working directory set to `RepoPath`. Capture stdout/stderr. If `wt` fails, return the error with the stderr output.
      4. **Determine worktree path**: after `wt switch --create`, the worktree will be at a path determined by `wt`. Run `wt list` in the repo directory, parse the output to find the row matching `<Branch>`, and extract the worktree path. Alternatively, use `git worktree list --porcelain` and find the worktree for the branch.
-     5. **Create tmux session**: run `tmux new-session -d -s "ai/<RepoName>/<Branch>" -c <worktree-path>`. The `-d` flag creates it detached. If a session with this name already exists, return an error: `"session ai/<RepoName>/<Branch> already exists"`.
-     6. **Launch agent**: run `tmux send-keys -t "ai/<RepoName>/<Branch>" "<Agent>" Enter` to start the agent in the session.
+     5. **Create tmux session**: run `tmux new-session -d -s "agent/<RepoName>/<Branch>" -c <worktree-path>`. The `-d` flag creates it detached. If a session with this name already exists, return an error: `"session agent/<RepoName>/<Branch> already exists"`.
+     6. **Launch agent**: run `tmux send-keys -t "agent/<RepoName>/<Branch>" "<Agent>" Enter` to start the agent in the session.
      7. Return nil on success.
 2. Update the `create` subcommand in `internal/cli/create.go` to:
    - Accept flags: `--repo` (path), `--branch` (name), `--agent` (command, defaults to config's `default_agent`).
    - All three of `--repo`, `--branch` are required. If missing, print usage and exit 1.
    - Call `session.Create()` with the provided options.
-   - On success, print `"Created session ai/<repo>/<branch>"` and exit 0.
+   - On success, print `"Created session agent/<repo>/<branch>"` and exit 0.
    - On failure, print the error and exit 1.
 
 ### Acceptance Criteria
 
-- [ ] `taism create --repo /path/to/repo --branch my-feature` creates a worktree via `wt`, a tmux session named `ai/<repo-dir-name>/my-feature`, and launches the default agent
+- [ ] `tasm create --repo /path/to/repo --branch my-feature` creates a worktree via `wt`, a tmux session named `agent/<repo-dir-name>/my-feature`, and launches the default agent
 - [ ] The tmux session's working directory is the worktree path (not the main repo)
 - [ ] `git fetch` runs before worktree creation
 - [ ] If the session name already exists, it exits with a clear error
@@ -276,7 +276,7 @@ Implement attaching to an existing AI session by name.
 
 ### Acceptance Criteria
 
-- [ ] `taism attach ai/myapp/feature-auth` switches to that tmux session
+- [ ] `tasm attach agent/myapp/feature-auth` switches to that tmux session
 - [ ] If already inside tmux, uses `switch-client`. If not inside tmux, uses `attach-session`.
 - [ ] If the session doesn't exist, exits with `"session <name> does not exist"` and exit code 1
 - [ ] If no argument is provided, prints usage and exits 1
@@ -300,7 +300,7 @@ Implement deleting a session, which includes killing the tmux session and cleani
 
 1. Create `internal/session/delete.go` with:
    - A `Delete(sessionName string) error` function that:
-     1. **Parse** the session name to extract `repoName` and `branch` (split `ai/<repo>/<branch>` on `/`).
+     1. **Parse** the session name to extract `repoName` and `branch` (split `agent/<repo>/<branch>` on `/`).
      2. **Find the repo path**: look up the session's working directory via `tmux display-message -t <sessionName> -p "#{session_path}"`. From this, derive the parent repo path (the worktree's parent repo).
      3. **Kill the tmux session**: run `tmux kill-session -t <sessionName>`.
      4. **Remove the worktree**: run `wt remove <branch>` with the working directory set to the parent repo. If `wt remove` fails, log a warning but don't fail the overall delete (the tmux session is already gone — warn the user to clean up manually).
@@ -318,8 +318,8 @@ Implement deleting a session, which includes killing the tmux session and cleani
 
 ### Acceptance Criteria
 
-- [ ] `taism delete ai/myapp/feature-auth` prompts for confirmation, then kills the tmux session and removes the worktree
-- [ ] `taism delete --force ai/myapp/feature-auth` skips confirmation
+- [ ] `tasm delete agent/myapp/feature-auth` prompts for confirmation, then kills the tmux session and removes the worktree
+- [ ] `tasm delete --force agent/myapp/feature-auth` skips confirmation
 - [ ] The tmux session is killed before worktree removal
 - [ ] If the worktree removal fails, the command still succeeds but prints a warning: `"warning: failed to remove worktree <branch>: <error>. Clean up manually with: wt remove <branch>"`
 - [ ] If the session doesn't exist, exits with a clear error
@@ -342,43 +342,43 @@ Create the tmux plugin entrypoint that registers the keybinding, and the popup s
 
 ### Steps
 
-1. Create `tmux-ai-session-manager.tmux` (the TPM entrypoint):
+1. Create `tmux-agent-session-manager.tmux` (the TPM entrypoint):
    - Must be executable (`chmod +x`).
-   - Read the keybinding from tmux option: `tmux show-option -gqv @ai-session-bind`, default to `A`.
+   - Read the keybinding from tmux option: `tmux show-option -gqv @agent-session-bind`, default to `A`.
    - Resolve the plugin directory: `PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`.
    - Bind the key: `tmux bind-key <keybinding> display-popup -E -w <width> -h <height> "$PLUGIN_DIR/scripts/popup.sh"`.
-   - Read popup width/height from tmux options `@ai-session-popup-width` and `@ai-session-popup-height`, defaulting to `80%` and `70%`.
+   - Read popup width/height from tmux options `@agent-session-popup-width` and `@agent-session-popup-height`, defaulting to `80%` and `70%`.
 2. Create `scripts/popup.sh`:
    - Must be executable.
-   - Locate the `taism` binary: check `$PATH` first, then fall back to `$PLUGIN_DIR/bin/taism`.
-   - Check that `taism` exists. If not, print `"taism binary not found. Run 'make install' in the plugin directory."` and exit 1.
-   - Run `taism list` to get the session list.
+   - Locate the `tasm` binary: check `$PATH` first, then fall back to `$PLUGIN_DIR/bin/tasm`.
+   - Check that `tasm` exists. If not, print `"tasm binary not found. Run 'make install' in the plugin directory."` and exit 1.
+   - Run `tasm list` to get the session list.
    - Prepend `[Create new session]` as the first line.
    - Pipe the combined list into `fzf-tmux` (or `fzf` since we're already in a popup) with these settings:
      - `--reverse` (list from top)
      - `--no-sort` (preserve our sort order: newest first)
-     - `--bind "alt-bspace:execute-silent(taism delete --force {})+reload(taism list)"` — delete and refresh
+     - `--bind "alt-bspace:execute-silent(tasm delete --force {})+reload(tasm list)"` — delete and refresh
      - `--bind "ctrl-n:print([Create new session])+accept"` — jump to create flow
      - `--header "enter: attach | alt-⌫: delete | ctrl-n: new"` — help text
    - Handle the selected result:
      - If the user selected `[Create new session]` → exec `$PLUGIN_DIR/scripts/create.sh`
-     - Otherwise → extract the session name (first whitespace-delimited field) and run `taism attach <session-name>`
+     - Otherwise → extract the session name (first whitespace-delimited field) and run `tasm attach <session-name>`
 
 ### Acceptance Criteria
 
-- [ ] After installing via TPM (or sourcing `tmux-ai-session-manager.tmux`), pressing `prefix + A` opens a floating popup
+- [ ] After installing via TPM (or sourcing `tmux-agent-session-manager.tmux`), pressing `prefix + A` opens a floating popup
 - [ ] The popup shows existing AI sessions plus `[Create new session]` at the top
 - [ ] Selecting a session and pressing Enter attaches to it
 - [ ] Pressing `Alt+Backspace` on a session deletes it and refreshes the list
 - [ ] Pressing `Ctrl+N` or selecting `[Create new session]` launches the create flow
 - [ ] The header line shows available keybindings
-- [ ] If `taism` binary is not found, shows an error message
+- [ ] If `tasm` binary is not found, shows an error message
 - [ ] Both `.tmux` and `.sh` files are executable
 
 ### Files to create
 
 ```
-tmux-ai-session-manager.tmux  (new, executable)
+tmux-agent-session-manager.tmux  (new, executable)
 scripts/popup.sh               (new, executable)
 ```
 
@@ -388,15 +388,15 @@ scripts/popup.sh               (new, executable)
 
 ### What to do
 
-Create the interactive session creation script that chains fzf prompts for repo selection, branch naming, and agent selection, then calls `taism create`.
+Create the interactive session creation script that chains fzf prompts for repo selection, branch naming, and agent selection, then calls `tasm create`.
 
 ### Steps
 
 1. Create `scripts/create.sh`:
    - Must be executable.
-   - Locate `taism` binary (same logic as `popup.sh` — extract to a shared helper if cleaner, or just duplicate the 3 lines).
+   - Locate `tasm` binary (same logic as `popup.sh` — extract to a shared helper if cleaner, or just duplicate the 3 lines).
    - **Step 1 — Pick a repo**:
-     - Run `taism repos` to get the repo list.
+     - Run `tasm repos` to get the repo list.
      - Pipe into `fzf --prompt "repo> " --reverse`.
      - Extract the selected repo path (second tab-separated field).
      - If the user cancels (Ctrl+C / Esc), exit 0 (return to popup or close).
@@ -405,16 +405,16 @@ Create the interactive session creation script that chains fzf prompts for repo 
      - The branch name is whatever the user typed (from `--print-query`).
      - If empty or cancelled, exit 0.
    - **Step 3 — Pick an agent**:
-     - Load the agent list from `taism config` output (parse the YAML `agents:` section — or add a `taism agents` helper that just prints agent names, one per line). Simplest approach: `taism config --json | jq -r '.agents | keys[]'` — but that adds a `jq` dependency. Better: add a `taism agents` subcommand that prints agent names one per line.
+     - Load the agent list from `tasm config` output (parse the YAML `agents:` section — or add a `tasm agents` helper that just prints agent names, one per line). Simplest approach: `tasm config --json | jq -r '.agents | keys[]'` — but that adds a `jq` dependency. Better: add a `tasm agents` subcommand that prints agent names one per line.
      - If there's only one agent, skip this step and use it automatically.
      - Otherwise, pipe into `fzf --prompt "agent> " --reverse`.
      - If cancelled, exit 0.
    - **Step 4 — Create the session**:
-     - Run `taism create --repo <repo-path> --branch <branch-name> --agent <agent>`.
-     - If it succeeds, run `taism attach ai/<repo-name>/<branch>`.
+     - Run `tasm create --repo <repo-path> --branch <branch-name> --agent <agent>`.
+     - If it succeeds, run `tasm attach agent/<repo-name>/<branch>`.
      - If it fails, show the error and wait for a keypress before exiting (so the user can read it).
 
-2. Add a `taism agents` subcommand (in `internal/cli/agents.go`):
+2. Add a `tasm agents` subcommand (in `internal/cli/agents.go`):
    - Loads config.
    - Prints each agent name (the map key), one per line, sorted alphabetically.
    - This avoids requiring `jq` as a dependency.
@@ -422,14 +422,14 @@ Create the interactive session creation script that chains fzf prompts for repo 
 ### Acceptance Criteria
 
 - [ ] Running `scripts/create.sh` walks the user through three fzf steps: repo → branch → agent
-- [ ] The repo picker shows all repos discovered by `taism repos`
+- [ ] The repo picker shows all repos discovered by `tasm repos`
 - [ ] The branch name step accepts freehand text input
 - [ ] The agent picker is skipped if only one agent is configured
 - [ ] Cancelling at any step (Ctrl+C) exits cleanly without creating anything
-- [ ] After all steps, `taism create` is called with the correct flags
+- [ ] After all steps, `tasm create` is called with the correct flags
 - [ ] On success, the user is attached to the new session
 - [ ] On failure, the error is displayed and the script waits before closing
-- [ ] `taism agents` prints agent names, one per line
+- [ ] `tasm agents` prints agent names, one per line
 
 ### Files to create/modify
 
@@ -468,9 +468,9 @@ Add startup validation so the tool fails fast with helpful messages when depende
 
 - [ ] Running any subcommand without `tmux` on PATH exits with: `"missing required dependencies: tmux"`
 - [ ] Running any subcommand without `wt` on PATH exits with: `"missing required dependencies: wt"` (with install hint)
-- [ ] Running `taism list` when tmux isn't running exits with: `"tmux server is not running. Start tmux first."`
-- [ ] Running `taism config` when tmux isn't running still works (no tmux check)
-- [ ] Running `taism repos` when tmux isn't running still works
+- [ ] Running `tasm list` when tmux isn't running exits with: `"tmux server is not running. Start tmux first."`
+- [ ] Running `tasm config` when tmux isn't running still works (no tmux check)
+- [ ] Running `tasm repos` when tmux isn't running still works
 - [ ] If multiple dependencies are missing, all are listed in a single error message
 - [ ] `git fetch` failure during create is a warning, not a fatal error
 
@@ -498,12 +498,12 @@ Verify the full workflow works end-to-end and write a README with installation a
 
 1. Manually test the full workflow in order:
    - `make build && make install`
-   - `taism config` — verify defaults
-   - `taism repos` — verify repo discovery
-   - `taism create --repo <path> --branch test-session --agent claude` — verify worktree + tmux session + agent launch
-   - `taism list` — verify the new session shows up
-   - `taism attach ai/<repo>/test-session` — verify attach works
-   - `taism delete --force ai/<repo>/test-session` — verify cleanup
+   - `tasm config` — verify defaults
+   - `tasm repos` — verify repo discovery
+   - `tasm create --repo <path> --branch test-session --agent claude` — verify worktree + tmux session + agent launch
+   - `tasm list` — verify the new session shows up
+   - `tasm attach agent/<repo>/test-session` — verify attach works
+   - `tasm delete --force agent/<repo>/test-session` — verify cleanup
    - Source the tmux plugin and test `prefix + A` popup
    - Test the full interactive create flow via the popup
 2. Fix any bugs found during testing.

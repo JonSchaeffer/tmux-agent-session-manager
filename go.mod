@@ -1,4 +1,4 @@
-module github.com/jonschaeffer/tmux-ai-session-manager
+module github.com/jonschaeffer/tmux-agent-session-manager
 
 go 1.25.4
 

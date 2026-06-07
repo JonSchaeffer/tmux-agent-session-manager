@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/jonschaeffer/tmux-ai-session-manager/internal/config"
+	"github.com/jonschaeffer/tmux-agent-session-manager/internal/config"
 	"github.com/spf13/cobra"
 )
 

@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jonschaeffer/tmux-ai-session-manager/internal/config"
-	"github.com/jonschaeffer/tmux-ai-session-manager/internal/deps"
-	"github.com/jonschaeffer/tmux-ai-session-manager/internal/session"
+	"github.com/jonschaeffer/tmux-agent-session-manager/internal/config"
+	"github.com/jonschaeffer/tmux-agent-session-manager/internal/deps"
+	"github.com/jonschaeffer/tmux-agent-session-manager/internal/session"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +55,7 @@ var createCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("Created session ai/%s/%s\n", repoName, createBranch)
+		fmt.Printf("Created session agent/%s/%s\n", repoName, createBranch)
 		return nil
 	},
 }

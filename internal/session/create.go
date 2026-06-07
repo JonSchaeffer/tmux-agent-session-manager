@@ -58,7 +58,7 @@ func Create(opts CreateOpts) error {
 	worktreeCreated := true
 
 	// Create the tmux session.
-	sessionName := fmt.Sprintf("ai/%s/%s", opts.RepoName, opts.Branch)
+	sessionName := fmt.Sprintf("agent/%s/%s", opts.RepoName, opts.Branch)
 	checkCmd := exec.Command("tmux", "has-session", "-t", sessionName)
 	if checkCmd.Run() == nil {
 		removeWorktree(opts.RepoPath, opts.Branch)

@@ -2,13 +2,13 @@
 
 PLUGIN_DIR="${PLUGIN_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
-# Locate taism binary.
-if command -v taism &>/dev/null; then
-  TAISM="taism"
-elif [[ -x "$PLUGIN_DIR/bin/taism" ]]; then
-  TAISM="$PLUGIN_DIR/bin/taism"
+# Locate tasm binary.
+if command -v tasm &>/dev/null; then
+  TAISM="tasm"
+elif [[ -x "$PLUGIN_DIR/bin/tasm" ]]; then
+  TAISM="$PLUGIN_DIR/bin/tasm"
 else
-  echo "taism binary not found. Run 'make install' in the plugin directory."
+  echo "tasm binary not found. Run 'make install' in the plugin directory."
   exit 1
 fi
 
@@ -32,7 +32,7 @@ selected="$(echo "$combined" | fzf \
   --no-sort \
   --no-multi \
   --header "enter: attach | tab/shift-tab: navigate | alt-bspace: delete | ctrl-n: new" \
-  --preview 'session={}; session="${session%% *}"; if [ "$session" = "[Create" ]; then printf "taism — tmux ai session manager\n\nCreate a new AI coding session:\n  1. Pick a git repo from your configured repo_root\n  2. Name a branch (becomes a git worktree via wt)\n  3. Pick an AI agent to launch\n\nEach session gets its own isolated worktree so\nmultiple agents can work on the same repo in parallel.\n\nPress Enter to get started."; else tmux capture-pane -e -t "$session" -p -S -50 2>/dev/null || echo "No preview available"; fi' \
+  --preview 'session={}; session="${session%% *}"; if [ "$session" = "[Create" ]; then printf "tasm — tmux agent session manager\n\nCreate a new AI coding session:\n  1. Pick a git repo from your configured repo_root\n  2. Name a branch (becomes a git worktree via wt)\n  3. Pick an AI agent to launch\n\nEach session gets its own isolated worktree so\nmultiple agents can work on the same repo in parallel.\n\nPress Enter to get started."; else tmux capture-pane -e -t "$session" -p -S -50 2>/dev/null || echo "No preview available"; fi' \
   --preview-window "$preview_window" \
   --bind "tab:down,shift-tab:up" \
   --bind "alt-bspace:execute-silent($TAISM delete --force {1})+reload($TAISM list | { printf '[Create new session]\n'; cat; })" \

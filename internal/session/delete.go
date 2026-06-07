@@ -11,7 +11,7 @@ func Delete(sessionName string) error {
 		return fmt.Errorf("session %s does not exist", sessionName)
 	}
 
-	// Parse ai/<repo>/<branch> to extract branch and repo path.
+	// Parse agent/<repo>/<branch> to extract branch and repo path.
 	parts := strings.SplitN(sessionName, "/", 3)
 	if len(parts) < 3 {
 		return fmt.Errorf("unexpected session name format: %s", sessionName)
