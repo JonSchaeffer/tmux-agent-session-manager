@@ -1,8 +1,11 @@
 # tmux-agent-session-manager
 
+> [!NOTE]
+> This project used AI to help create it. Opus 4.8 was used to help ideate and create work tasks. Sonnet 4.6 was used to help write code. All code was evaluated by a human.
+
 [![CI](https://github.com/JonSchaeffer/tmux-agent-session-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/JonSchaeffer/tmux-agent-session-manager/actions/workflows/ci.yml)
 
-A tmux plugin and CLI tool for managing AI coding agent sessions. It handles the full lifecycle — creating a git worktree, spawning a tmux session, launching your agent, and cleaning everything up when you're done — all from a single fuzzy-finder popup inside tmux.
+A tmux plugin and CLI tool for managing AI coding agent sessions. It handles the full lifecycle for agent management. It creates a git worktree, spawns a tmux session, and launches your agent. When you are done, it cleans everything up. All from a single fuzzy-finder popup inside tmux.
 
 ## Demo
 
@@ -55,11 +58,12 @@ repo_root: ~/code
 
 # Agent commands available in the picker
 agents:
+  pi: pi
   claude: claude
   aider: aider
 
 # Agent used when none is specified or only one is configured
-default_agent: claude
+default_agent: pi
 
 # Tmux keybinding for the popup (prefix + <key>)
 keybinding: A
