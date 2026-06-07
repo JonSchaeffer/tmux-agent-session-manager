@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	cleanupForce    bool
+	cleanupForce     bool
 	cleanupOlderThan string
 )
 

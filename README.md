@@ -1,5 +1,7 @@
 # tmux-agent-session-manager
 
+[![CI](https://github.com/JonSchaeffer/tmux-agent-session-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/JonSchaeffer/tmux-agent-session-manager/actions/workflows/ci.yml)
+
 A tmux plugin and CLI tool for managing AI coding agent sessions. It handles the full lifecycle — creating a git worktree, spawning a tmux session, launching your agent, and cleaning everything up when you're done — all from a single fuzzy-finder popup inside tmux.
 
 ## Demo
@@ -22,10 +24,10 @@ A tmux plugin and CLI tool for managing AI coding agent sessions. It handles the
 Add to `~/.tmux.conf`:
 
 ```tmux
-set -g @plugin 'jonschaeffer/tmux-agent-session-manager'
+set -g @plugin 'JonSchaeffer/tmux-agent-session-manager'
 ```
 
-Then press `prefix + I` to install.
+Press `prefix + I` to install. On first load, the plugin automatically fetches the `tasm` binary — either a prebuilt release binary for your platform (darwin/linux, arm64/amd64), or built from source if Go is installed. No manual build step needed.
 
 ### Manual
 

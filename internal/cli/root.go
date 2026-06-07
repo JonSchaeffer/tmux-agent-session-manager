@@ -8,8 +8,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "tasm",
-	Short: "tasm - tmux agent session manager",
+	Use:     "tasm",
+	Short:   "tasm - tmux agent session manager",
+	Version: version,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("tasm - tmux agent session manager")
 	},
@@ -30,4 +31,5 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(agentsCmd)
 	rootCmd.AddCommand(cleanupCmd)
+	rootCmd.AddCommand(versionCmd)
 }

@@ -203,6 +203,7 @@ The shell scripts are thin wrappers — they invoke `tasm` subcommands and pipe 
 - [ ] Integration with `wt list --full` for CI status in the popup
 - [ ] Preview pane in fzf showing recent session output
 - [ ] Auto-cleanup of stale sessions (agent exited, worktree orphaned)
+- [ ] **Real activity status (working/waiting/exited).** Today `status` only distinguishes agent-alive (`running`) from agent-exited (`idle`) via the pane's foreground process — it can't tell an actively-processing agent from one waiting at the prompt. To show a true "working" state, inspect pane *content* for the agent's processing indicator (Claude Code prints an `… (esc to interrupt)` line + spinner while working, vs. just the `❯` prompt box when idle). Three states: `working` (indicator present), `waiting` (agent alive, no indicator), `exited` (bare shell). Caveat: the indicator is agent-specific and can change across Claude Code versions; would need per-agent patterns for aider/codex/etc.
 
 ## Resolved Decisions
 

@@ -58,7 +58,7 @@ func Create(opts CreateOpts) error {
 	worktreeCreated := true
 
 	// Create the tmux session.
-	sessionName := fmt.Sprintf("agent/%s/%s", opts.RepoName, opts.Branch)
+	sessionName := fmt.Sprintf("agent/%s/%s", sanitizeRepoSegment(opts.RepoName), opts.Branch)
 	checkCmd := exec.Command("tmux", "has-session", "-t", sessionName)
 	if checkCmd.Run() == nil {
 		removeWorktree(opts.RepoPath, opts.Branch)
@@ -138,13 +138,16 @@ func findWorktreePath(repoPath, branch string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return parseWorktreePath(string(out), branch)
+}
 
+func parseWorktreePath(porcelain, branch string) (string, error) {
 	// Porcelain format blocks separated by blank lines:
 	//   worktree /path/to/worktree
 	//   HEAD <sha>
 	//   branch refs/heads/<name>
 	var currentPath string
-	for _, line := range strings.Split(string(out), "\n") {
+	for _, line := range strings.Split(porcelain, "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "worktree ") {
 			currentPath = strings.TrimPrefix(line, "worktree ")

@@ -2,6 +2,9 @@
 
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Ensure the tasm binary exists (downloads prebuilt or builds from source).
+"$PLUGIN_DIR/scripts/ensure-binary.sh" &
+
 keybinding="$(tmux show-option -gqv @agent-session-bind)"
 keybinding="${keybinding:-A}"
 

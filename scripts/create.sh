@@ -16,6 +16,7 @@ repo_line="$("$TAISM" repos | fzf --height=100% --prompt "repo> " --reverse --no
 [[ -z "$repo_line" ]] && exit 0
 repo_path="$(echo "$repo_line" | awk -F'\t' '{print $2}')"
 repo_name="$(echo "$repo_line" | awk -F'\t' '{print $1}')"
+repo_name="${repo_name//\//-}"
 
 # Step 2: Name the branch (freehand input). Loop until unique name or user cancels.
 while true; do

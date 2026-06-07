@@ -1,0 +1,50 @@
+# Asset naming scheme: tasm-<os>-<arch>
+# Examples: tasm-darwin-arm64, tasm-darwin-amd64, tasm-linux-amd64, tasm-linux-arm64
+# Task 4 (ensure-binary.sh) downloads from:
+#   https://github.com/JonSchaeffer/tmux-agent-session-manager/releases/latest/download/tasm-<os>-<arch>
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - os: darwin
+            arch: arm64
+          - os: darwin
+            arch: amd64
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          go build \
+            -ldflags "-s -w -X github.com/jonschaeffer/tmux-agent-session-manager/internal/cli.version=${GITHUB_REF_NAME}" \
+            -o tasm-${{ matrix.os }}-${{ matrix.arch }} \
+            ./cmd/tasm
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tasm-${{ matrix.os }}-${{ matrix.arch }}

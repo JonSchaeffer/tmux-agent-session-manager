@@ -48,44 +48,13 @@ func List() ([]Session, error) {
 
 	var sessions []Session
 	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		if line == "" {
+		s, ok := parseSessionLine(line)
+		if !ok {
 			continue
 		}
-		parts := strings.SplitN(line, "\t", 3)
-		if len(parts) < 3 {
-			continue
-		}
-		name, createdStr, workDir := parts[0], parts[1], parts[2]
-
-		if !strings.HasPrefix(name, "agent/") {
-			continue
-		}
-
-		segments := strings.SplitN(name, "/", 3)
-		if len(segments) < 3 {
-			continue
-		}
-		repoName := segments[1]
-		branch := segments[2]
-
-		unix, err := strconv.ParseInt(createdStr, 10, 64)
-		if err != nil {
-			continue
-		}
-		createdAt := time.Unix(unix, 0)
-
-		agent := detectAgent(name)
-		status := detectStatus(name)
-
-		sessions = append(sessions, Session{
-			Name:      name,
-			RepoName:  repoName,
-			Branch:    branch,
-			Agent:     agent,
-			Status:    status,
-			CreatedAt: createdAt,
-			WorkDir:   workDir,
-		})
+		s.Agent = detectAgent(s.Name)
+		s.Status = detectStatus(s.Name)
+		sessions = append(sessions, s)
 	}
 
 	sort.Slice(sessions, func(i, j int) bool {
@@ -93,6 +62,38 @@ func List() ([]Session, error) {
 	})
 
 	return sessions, nil
+}
+
+func parseSessionLine(line string) (Session, bool) {
+	if line == "" {
+		return Session{}, false
+	}
+	parts := strings.SplitN(line, "\t", 3)
+	if len(parts) < 3 {
+		return Session{}, false
+	}
+	name, createdStr, workDir := parts[0], parts[1], parts[2]
+
+	if !strings.HasPrefix(name, "agent/") {
+		return Session{}, false
+	}
+	segments := strings.SplitN(name, "/", 3)
+	if len(segments) < 3 {
+		return Session{}, false
+	}
+
+	unix, err := strconv.ParseInt(createdStr, 10, 64)
+	if err != nil {
+		return Session{}, false
+	}
+
+	return Session{
+		Name:      name,
+		RepoName:  segments[1],
+		Branch:    segments[2],
+		CreatedAt: time.Unix(unix, 0),
+		WorkDir:   workDir,
+	}, true
 }
 
 func detectAgent(sessionName string) string {
@@ -160,4 +161,8 @@ func RelativeTime(t time.Time) string {
 
 func MarshalJSON(sessions []Session) ([]byte, error) {
 	return json.MarshalIndent(sessions, "", "  ")
+}
+
+func sanitizeRepoSegment(name string) string {
+	return strings.ReplaceAll(name, "/", "-")
 }
